@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title>GlobalGateway Capture Sample App</title>
+  <meta name="description" content="GlobalGateway Capture SDK Sample App">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="./GlobalGatewayCapturePublicAcuant/css/index.css">
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+    integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+  <script type='text/javascript' src="./GlobalGatewayCapturePublicAcuant/GlobalGatewayImageCapture.js"></script>
+  <div id="uiContainer">
+
+    <h1 id="globalgateway-header">Global Gateway Capture Web - Example</h1>
+
+    <h2>Auto/Manual Capture</h2>
+    &nbsp;
+    <select id="captureModeSelection">
+      <option value="Auto">Auto</option>
+      <option value="Manual">Manual</option>
+    </select>
+    &nbsp;
+    <select id="captureTypeSelection">
+      <option value="DocumentFront">Document (Front)</option>
+      <option value="DocumentBack">Document (Back)</option>
+      <option value="Passport">Passport</option>
+      <option value="LivePhoto">Live Photo</option>
+    </select>
+    &nbsp;
+    <select id="geoModeSelection">
+      <option value=true>Enable Geolocation Collection</option>
+      <option value=false>Disable Geolocation Collection</option>
+    </select>
+    <br />
+    <br />
+    &nbsp;
+    <label for="tokenInput">SDK Token:</label>
+    <input type="text" id="tokenInput" name="tokenInput">
+    <br />
+    <br />
+    &nbsp;&nbsp;<button id="start-button" type="button" onclick="startCapture()">Capture</button>
+    <br />
+    <br />
+    <br />
+    <hr />
+    <h2 style="margin-top: 10px; margin-bottom: 0px;">Capture Result</h2>
+    <br />
+    <h3 id="globalGatewayError"></h3>
+    <div class="imageBox">
+      <img id="capturedFrontImage">
+    </div>
+    <hr />
+    <textarea id="quality-data"></textarea>
+  </div>
+
+  <script>
+    const username = 'USERNAME_TO_REPLACE';
+    const password = 'PASSWORD_TO_REPLACE';
+
+    var isSDKInited = false;
+
+    window.GlobalGatewayImageCompressionOption = {
+      maxSizeMB: 4,
+      maxWidthOrHeight: 4096,
+      useWebWorker: true,
+    };
+    window.onAcuantSdkLoaded = () => {
+      const successHelper = () => {
+        isSDKInited = true;
+      };
+      const failHelper = () => {
+        console.error('Fail to init sdk');
+        showError([{ code: -1, type: 'Capture SDK is not initialized' }]);
+      };
+      InitSDK(username, password, successHelper, failHelper);
+    }
+
+    function writeText(text) {
+      document.getElementById('quality-data').value = text;
+    };
+
+    function clearText() {
+      document.getElementById('quality-data').value = '';
+    };
+
+    function showError(error) {
+      endProcess();
+      if (Array.isArray(error) && error.length > 0) {
+        document.querySelector('#globalGatewayError').innerHTML = "Error code: " + error[0].code + " " + error[0].type;
+      } else {
+        document.querySelector('#globalGatewayError').innerHTML = "Unable to capture";
+      }
+    }
+
+    function showImage(result) {
+      endProcess();
+      document.querySelector('#globalGatewayError').innerHTML = "";
+      document.querySelector('#capturedFrontImage').src = result.image;
+      clearText();
+
+      let qualityText = '';
+      if (result.quality) {
+        qualityText += `Sharpness: ${result.quality.sharpness}\n` +
+          `DPI: ${result.quality.dpi}\n` +
+          `Glare: ${result.quality.glare}\n`;
+      }
+      if (result.classification) {
+        qualityText += `IDClassification: ${JSON.stringify(result.classification)}\n`;
+      }
+      if (result.liveness) {
+        qualityText += `LivenessResult: ${JSON.stringify(result.liveness.LivenessResult)}\n` +
+          `ErrorCode: ${result.liveness.ErrorCode}\n` +
+          `ErrorMessage: ${result.liveness.ErrorMessage}`;
+      }
+      writeText(qualityText);
+    }
+
+    function getIsAutoDropDown() {
+      var dropDown = document.getElementById("captureModeSelection");
+      return dropDown.options[dropDown.selectedIndex].value == "Auto";
+    };
+
+    function startCapture() {
+      if (!isSDKInited) {
+        showError([{ code: -1, type: 'Capture SDK is not initialized' }]);
+        return;
+      }
+      var geoDropdown = document.getElementById("geoModeSelection");
+      var shouldCollectGeo = geoDropdown.options[geoDropdown.selectedIndex].value;
+
+      var dropDown = document.getElementById("captureTypeSelection");
+      var selectedType = dropDown.options[dropDown.selectedIndex].value;
+
+      var token = document.getElementById("tokenInput").value;
+
+      if (selectedType == "DocumentFront") {
+        startDocumentFrontCapture(shouldCollectGeo, token);
+      } else if (selectedType == "DocumentBack") {
+        startDocumentBackCapture(shouldCollectGeo);
+      } else if (selectedType == "LivePhoto") {
+        startSelfie(shouldCollectGeo, token);
+      } else if (selectedType == "Passport") {
+        startPassport(shouldCollectGeo, token);
+      }
+    }
+
+    function startDocumentFrontCapture(shouldCollectGeo, token) {
+      // Capture Driver Licence and ID Cards.
+      StartAcuantFrontDocumentCapture(getIsAutoDropDown(), shouldCollectGeo, startProcess, showImage, showError, token);
+    }
+    function startDocumentBackCapture(shouldCollectGeo) {
+      // Capture Driver Licence and ID Cards.
+      StartAcuantBackDocumentCapture(getIsAutoDropDown(), shouldCollectGeo, startProcess, showImage, showError);
+    }
+    function startPassport(shouldCollectGeo, token) {
+      // Capture Photo Page of Passport
+      StartAcuantPassportCapture(getIsAutoDropDown(), shouldCollectGeo, startProcess, showImage, showError, token);
+    }
+    function startSelfie(shouldCollectGeo, token) {
+      // Capture Selfie
+      StartAcuantSelfieCapture(getIsAutoDropDown(), shouldCollectGeo, startProcess, showImage, showError, token);
+    }
+
+    function startSpinner() {
+      document.getElementById('main-spinner').style.display = 'block';
+    };
+
+    function hideSpinner() {
+      document.getElementById('main-spinner').style.display = 'none';
+    };
+
+    function startProcess() {
+      $('button').attr('disabled', true);
+      startSpinner();
+    };
+
+    function endProcess() {
+      $(':button').attr('disabled', false);
+      hideSpinner();
+    };
+
+  </script>
+  <!-- root is for node server -->
+  <div id="root"></div>
+  <div class="loader-wrap" id="main-spinner">
+    <div class="loader"></div>
+  </div>
+</body>
+
+</html>

@@ -1,0 +1,60 @@
+#uiContainer {
+  margin: auto;
+  width: 90%;
+}
+
+#globalgateway-header {
+  text-align: center;
+}
+
+#quality-data {
+  width: 80%;
+  min-height: 70px;
+  height: auto;
+}
+
+.imageBox img {
+  width: 70%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  object-fit: contain;
+}
+
+.imageBox {
+  text-align: justify;
+  width: 90%;
+}
+
+.loader-wrap {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  top: 50%;
+  left: 50%;
+  margin-left: -60px;
+  margin-top: -60px;
+  display: none;
+}
+
+.loader {
+  border: 16px solid #f3f3f3;
+  /* Light grey */
+  border-top: 16px solid #3498db;
+  border-bottom: 16px solid #3498db;
+  /* Blue */
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
